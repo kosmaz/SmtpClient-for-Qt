@@ -66,6 +66,7 @@ void MimeMessage::setReplyTo(EmailAddress* rto) {
 void MimeMessage::setSender(EmailAddress* e)
 {
     this->sender = e;
+    e->setParent(this);
 }
 
 void MimeMessage::addRecipient(EmailAddress* rcpt, RecipientType type)
@@ -82,6 +83,8 @@ void MimeMessage::addRecipient(EmailAddress* rcpt, RecipientType type)
         recipientsBcc << rcpt;
         break;
     }
+
+    rcpt->setParent(this);
 }
 
 void MimeMessage::addTo(EmailAddress* rcpt) {
@@ -106,6 +109,11 @@ void MimeMessage::addPart(MimePart *part)
     if (typeid(*content) == typeid(MimeMultiPart)) {
         ((MimeMultiPart*) content)->addPart(part);
     };
+}
+
+void MimeMessage::setInReplyTo(const QString& inReplyTo)
+{
+    mInReplyTo = inReplyTo;
 }
 
 void MimeMessage::setHeaderEncoding(MimePart::Encoding hEnc)
@@ -280,6 +288,11 @@ QString MimeMessage::toString()
     /* ---------------------------------- */
 
     mime += "MIME-Version: 1.0\r\n";
+    if (!mInReplyTo.isEmpty())
+    {
+        mime += "In-Reply-To: <" + mInReplyTo + ">\r\n";
+        mime += "References: <" + mInReplyTo + ">\r\n";
+    }
     mime += QString("Date: %1\r\n").arg(QDateTime::currentDateTime().toString(Qt::RFC2822Date));
 
     mime += content->toString();
